@@ -2,7 +2,7 @@
 An endless, high-stakes Bible verse memory game. What started as a serene, Sunday-school-style web app evolved into a fast-paced survival arcade game.
 Test your scripture knowledge against a shrinking timer. Fast fingers build your score, but wrong answers will drain your clock.
 
-[Play the Live Demo Here] <!-- Add your Vercel/Netlify link here -->
+[[Play the Live Demo Here]](https://dailymanna.vercel.app/)
 
 ## ⚡ The Mechanics
 • Endless Survival: There is no final level. The game continues until your timer hits 0.0s.
