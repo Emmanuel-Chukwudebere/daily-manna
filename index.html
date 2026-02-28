@@ -141,21 +141,30 @@
     <!-- MAIN APP CONTAINER -->
     <div class="w-full max-w-lg mx-auto flex flex-col h-full max-h-[850px]">
         
-        <!-- Header -->
+        <!-- Header with Sound Toggle -->
         <header class="flex justify-between items-end mb-2 px-2 shrink-0">
-            <div>
-                <h1 class="font-serif font-bold text-2xl text-stone-900 tracking-tight">Daily Manna</h1>
-                <p class="text-[10px] text-red-600 uppercase tracking-widest font-black">Sudden Death</p>
+            <div class="flex items-center gap-2">
+                <div>
+                    <h1 class="font-serif font-bold text-2xl text-stone-900 tracking-tight leading-none">Daily Manna</h1>
+                    <p class="text-[10px] text-red-600 uppercase tracking-widest font-black mt-1">Sudden Death</p>
+                </div>
             </div>
             
-            <div id="stats-board" class="flex gap-3 hidden">
-                <div class="text-right">
-                    <div class="text-[10px] text-stone-400 uppercase font-bold tracking-wider">Score</div>
-                    <div id="score-display" class="font-mono font-black text-xl text-stone-800 leading-none">0</div>
-                </div>
-                <div class="text-right bg-orange-100 px-3 py-1 rounded-lg border border-orange-200 shadow-sm">
-                    <div class="text-[10px] text-orange-700 uppercase font-bold tracking-wider">Level</div>
-                    <div class="font-mono font-black text-xl text-orange-700 leading-none" id="level-display">1</div>
+            <div class="flex items-center gap-4">
+                <button id="sound-toggle" onclick="toggleSound()" class="p-2 text-stone-400 hover:text-stone-700 transition" aria-label="Toggle Sound">
+                    <svg id="sound-icon-on" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                    <svg id="sound-icon-off" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                </button>
+
+                <div id="stats-board" class="flex gap-3 hidden">
+                    <div class="text-right">
+                        <div class="text-[10px] text-stone-400 uppercase font-bold tracking-wider">Score</div>
+                        <div id="score-display" class="font-mono font-black text-xl text-stone-800 leading-none">0</div>
+                    </div>
+                    <div class="text-right bg-orange-100 px-3 py-1 rounded-lg border border-orange-200 shadow-sm">
+                        <div class="text-[10px] text-orange-700 uppercase font-bold tracking-wider">Level</div>
+                        <div class="font-mono font-black text-xl text-orange-700 leading-none" id="level-display">1</div>
+                    </div>
                 </div>
             </div>
         </header>
@@ -168,8 +177,8 @@
             </div>
             <h2 class="font-serif text-3xl md:text-4xl text-stone-900 mb-2 font-black">Endless Survival</h2>
             <div class="bg-white p-4 rounded-xl shadow-sm border border-stone-100 max-w-sm mb-8 text-sm text-stone-600 space-y-2 text-left">
-                <p>🔥 <strong>The Rules:</strong> Keep completing verses. The game never stops until time runs out.</p>
-                <p>⏱️ <strong>The Squeeze:</strong> Every level you beat, you get less time for the next one.</p>
+                <p>🔥 <strong>The Rules:</strong> The game never stops until time runs out.</p>
+                <p>⏱️ <strong>The Squeeze:</strong> You start with <strong>30 seconds</strong>. Every level you beat, the clock gets tighter.</p>
                 <p>❌ <strong>The Penalty:</strong> Wrong answers instantly deduct <strong>3 seconds</strong>.</p>
             </div>
             <button onclick="startGame()" class="w-full bg-red-600 text-white font-black text-lg py-4 rounded-xl hover:bg-red-700 transition shadow-xl hover:shadow-2xl flex justify-center items-center gap-2 transform hover:-translate-y-1">
@@ -182,9 +191,9 @@
             
             <div class="flex justify-between items-center mb-2 px-1 shrink-0">
                 <span class="text-xs font-bold text-stone-500 uppercase tracking-widest flex gap-2">
-                    <span id="target-time-badge" class="bg-stone-200 px-2 rounded text-stone-700">Max: 20s</span>
+                    <span id="target-time-badge" class="bg-stone-200 px-2 rounded text-stone-700">Max: 30s</span>
                 </span>
-                <span class="text-xl font-mono font-black text-stone-800" id="time-text">20.0s</span>
+                <span class="text-xl font-mono font-black text-stone-800" id="time-text">30.0s</span>
             </div>
 
             <!-- The Shrinking Timer -->
@@ -229,12 +238,12 @@
                 <div class="grid grid-cols-2 gap-3 my-6">
                     <div class="bg-stone-50 rounded-2xl p-4 border border-stone-100 shadow-inner">
                         <div class="text-[10px] text-stone-400 uppercase font-bold tracking-widest mb-1">Final Score</div>
-                        <div id="final-score" class="font-mono text-3xl font-black text-stone-800">1,240</div>
+                        <div id="final-score" class="font-mono text-3xl font-black text-stone-800">0</div>
                     </div>
                     <div class="bg-amber-50 rounded-2xl p-4 border border-amber-100 shadow-inner">
                         <div class="text-[10px] text-amber-600 uppercase font-bold tracking-widest mb-1">Verses Cleared</div>
                         <div class="font-mono text-3xl font-black text-amber-600 flex justify-center items-center gap-1">
-                            <span id="final-level">5</span>
+                            <span id="final-level">0</span>
                         </div>
                     </div>
                 </div>
@@ -265,27 +274,127 @@
     </div>
 
     <script>
-        // --- Custom Vercel Analytics Event Tracking (Optional but recommended) ---
-        function trackEvent(eventName, data) {
-            if (window.va) {
-                window.va('event', eventName, data);
+        // --- Web Audio Synthesizer (Zero Dependencies, NO BACKGROUND HUM) ---
+        const AudioEngine = {
+            ctx: null,
+            isMuted: true, // Default to muted until user interacts
+            masterGain: null,
+
+            init() {
+                if (this.ctx) return;
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.connect(this.ctx.destination);
+                
+                // Set initial mute state
+                this.masterGain.gain.value = this.isMuted ? 0 : 1;
+            },
+
+            setMute(muteStatus) {
+                this.isMuted = muteStatus;
+                if (this.masterGain) {
+                    // Smooth volume transition
+                    this.masterGain.gain.setTargetAtTime(this.isMuted ? 0 : 1, this.ctx.currentTime, 0.1);
+                }
+                
+                // Update icons
+                document.getElementById('sound-icon-on').classList.toggle('hidden', this.isMuted);
+                document.getElementById('sound-icon-off').classList.toggle('hidden', !this.isMuted);
+            },
+
+            playTone(freq, type, duration, vol=0.1) {
+                if(!this.ctx || this.isMuted) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    
+                    gain.gain.setValueAtTime(0, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(vol, this.ctx.currentTime + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    
+                    osc.start(this.ctx.currentTime);
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {} // Catch context interrupted errors
+            },
+
+            // Sound Effects ONLY
+            playPop() { this.playTone(600, 'sine', 0.1, 0.15); },
+            
+            playSuccess() {
+                // Happy C Major Arpeggio
+                this.playTone(523.25, 'triangle', 0.3, 0.1); // C5
+                setTimeout(() => this.playTone(659.25, 'triangle', 0.3, 0.1), 100); // E5
+                setTimeout(() => this.playTone(783.99, 'triangle', 0.5, 0.15), 200); // G5
+            },
+            
+            playError() {
+                // Harsh low buzz
+                this.playTone(150, 'sawtooth', 0.4, 0.2);
+            },
+            
+            playTick() {
+                // High short tick for panic mode
+                this.playTone(800, 'square', 0.05, 0.05);
+            },
+            
+            playGameOver() {
+                // Deep ominous boom
+                this.playTone(100, 'sine', 2.0, 0.4);
+                setTimeout(() => this.playTone(80, 'sawtooth', 1.5, 0.2), 50);
             }
+        };
+
+        function toggleSound() {
+            if (!AudioEngine.ctx) AudioEngine.init(); // Init on first click if needed
+            AudioEngine.setMute(!AudioEngine.isMuted);
         }
 
-        // --- Endless Pool of Verses (Escalating Difficulty) ---
+        // --- Custom Vercel Analytics Event Tracking ---
+        function trackEvent(eventName, data) {
+            if (window.va) window.va('event', eventName, data);
+        }
+
+        // --- Mega-Library of 35+ Verses ---
         const verseDatabase = [
-            { ref: "John 11:35", text: "Jesus {0}.", answers: ["wept"], distractors: ["cried", "prayed", "slept"] },
-            { ref: "1 Thess 5:16", text: "Rejoice {0},", answers: ["always"], distractors: ["forever", "daily", "often"] },
-            { ref: "Psalm 56:3", text: "When I am {0}, I put my {1} in you.", answers: ["afraid", "trust"], distractors: ["scared", "faith", "hope", "lost"] },
-            { ref: "Philippians 4:13", text: "I can do all {0} through him who gives me {1}.", answers: ["things", "strength"], distractors: ["work", "miracles", "power", "hope"] },
+            { ref: "Genesis 1:1", text: "In the beginning God created the {0} and the {1}.", answers: ["heavens", "earth"], distractors: ["sky", "world", "stars", "land"] },
+            { ref: "John 11:35", text: "Jesus {0}.", answers: ["wept"], distractors: ["cried", "prayed", "slept", "spoke"] },
+            { ref: "1 Thess 5:16", text: "Rejoice {0},", answers: ["always"], distractors: ["forever", "daily", "often", "sometimes"] },
+            { ref: "Psalm 23:1", text: "The Lord is my {0}, I lack {1}.", answers: ["shepherd", "nothing"], distractors: ["guide", "everything", "father", "friend"] },
+            { ref: "1 John 4:8", text: "Whoever does not love does not know God, because God is {0}.", answers: ["love"], distractors: ["light", "holy", "truth", "good"] },
+            { ref: "Philippians 4:4", text: "Rejoice in the Lord {0}. I will say it again: {1}!", answers: ["always", "Rejoice"], distractors: ["forever", "Praise", "daily", "Sing"] },
+            { ref: "Proverbs 3:6", text: "In all your ways {0} to him, and he will make your paths {1}.", answers: ["submit", "straight"], distractors: ["pray", "clear", "listen", "smooth"] },
+            { ref: "Romans 3:23", text: "For all have {0} and fall short of the {1} of God.", answers: ["sinned", "glory"], distractors: ["failed", "grace", "stumbled", "power"] },
+            { ref: "Hebrews 11:1", text: "Now faith is confidence in what we {0} for and assurance about what we do not {1}.", answers: ["hope", "see"], distractors: ["pray", "know", "wait", "feel"] },
+            
+            { ref: "John 3:16", text: "For God so loved the {0} that he gave his one and only {1}, that whoever believes in him shall not perish but have eternal {2}.", answers: ["world", "Son", "life"], distractors: ["earth", "child", "peace", "soul"] },
             { ref: "Proverbs 3:5", text: "Trust in the Lord with all your {0}, and do not lean on your own {1}.", answers: ["heart", "understanding"], distractors: ["mind", "wisdom", "strength", "eyes"] },
             { ref: "Psalm 119:105", text: "Your word is a {0} for my feet, a {1} on my path.", answers: ["lamp", "light"], distractors: ["guide", "fire", "torch", "shield"] },
             { ref: "Matthew 5:14", text: "You are the {0} of the world. A town built on a {1} cannot be hidden.", answers: ["light", "hill"], distractors: ["salt", "mountain", "rock", "hope"] },
             { ref: "Romans 8:28", text: "And we know that in all things God works for the {0} of those who {1} him.", answers: ["good", "love"], distractors: ["benefit", "serve", "seek", "glory"] },
             { ref: "Isaiah 40:31", text: "But those who {0} in the Lord will renew their {1}. They will soar on wings like {2}.", answers: ["hope", "strength", "eagles"], distractors: ["trust", "power", "doves", "wait"] },
+            { ref: "Jeremiah 29:11", text: "For I know the {0} I have for you, declares the Lord, plans to {1} you and not to harm you...", answers: ["plans", "prosper"], distractors: ["thoughts", "bless", "future", "keep"] },
+            { ref: "Romans 12:2", text: "Do not conform to the pattern of this {0}, but be transformed by the renewing of your {1}.", answers: ["world", "mind"], distractors: ["age", "heart", "earth", "spirit"] },
+            { ref: "Joshua 1:9", text: "Be {0} and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you {1}.", answers: ["strong", "go"], distractors: ["bold", "walk", "brave", "stay"] },
+            { ref: "Matthew 6:33", text: "But seek first his {0} and his righteousness, and all these {1} will be given to you as well.", answers: ["kingdom", "things"], distractors: ["face", "blessings", "will", "gifts"] },
+            { ref: "Proverbs 4:23", text: "Above all else, guard your {0}, for everything you do {1} from it.", answers: ["heart", "flows"], distractors: ["mind", "comes", "soul", "starts"] },
+            
             { ref: "Galatians 5:22", text: "But the fruit of the Spirit is love, joy, {0}, {1}, kindness, {2}, faithfulness...", answers: ["peace", "patience", "goodness"], distractors: ["grace", "mercy", "power", "gentleness"] },
             { ref: "Ephesians 2:8", text: "For it is by {0} you have been saved, through {1}—and this is not from yourselves, it is the {2} of God.", answers: ["grace", "faith", "gift"], distractors: ["mercy", "works", "power", "will"] },
-            { ref: "2 Timothy 1:7", text: "For the Spirit God gave us does not make us {0}, but gives us {1}, {2} and self-discipline.", answers: ["timid", "power", "love"], distractors: ["weak", "strength", "peace", "fearful"] }
+            { ref: "2 Timothy 1:7", text: "For the Spirit God gave us does not make us {0}, but gives us {1}, {2} and self-discipline.", answers: ["timid", "power", "love"], distractors: ["weak", "strength", "peace", "fearful"] },
+            { ref: "Micah 6:8", text: "And what does the Lord require of you? To act {0} and to love {1} and to walk {2} with your God.", answers: ["justly", "mercy", "humbly"], distractors: ["rightly", "grace", "quietly", "truth"] },
+            { ref: "Proverbs 16:9", text: "In their {0} humans plan their course, but the Lord establishes their {1}.", answers: ["hearts", "steps"], distractors: ["minds", "ways", "thoughts", "paths"] },
+            { ref: "Psalm 46:1", text: "God is our {0} and strength, an ever-present {1} in trouble.", answers: ["refuge", "help"], distractors: ["shield", "guide", "rock", "savior"] },
+            { ref: "Proverbs 18:10", text: "The name of the Lord is a fortified {0}; the righteous run to it and are {1}.", answers: ["tower", "safe"], distractors: ["city", "saved", "wall", "secure"] },
+            { ref: "Isaiah 41:10", text: "So do not {0}, for I am with you; do not be dismayed, for I am your God. I will {1} you and help you.", answers: ["fear", "strengthen"], distractors: ["worry", "hold", "faint", "guide"] },
+            { ref: "Matthew 11:28", text: "Come to me, all you who are weary and {0}, and I will give you {1}.", answers: ["burdened", "rest"], distractors: ["heavy", "peace", "tired", "hope"] },
+            { ref: "John 14:6", text: "Jesus answered, 'I am the {0} and the {1} and the life. No one comes to the Father except through me.'", answers: ["way", "truth"], distractors: ["door", "light", "gate", "word"] },
+            { ref: "Acts 1:8", text: "But you will receive {0} when the Holy Spirit comes on you; and you will be my {1} in Jerusalem...", answers: ["power", "witnesses"], distractors: ["strength", "servants", "grace", "people"] }
         ];
 
         let gameVerses = [];
@@ -294,11 +403,12 @@
         let currentLevel = 1; 
         let score = 0;
         let timerInterval;
-        let currentMaxTime = 20; 
-        let timeLeft = 20;
+        let currentMaxTime = 30; // Starts at 30s
+        let timeLeft = 30;
         let currentVerseData = null;
         let slotsFilled = [];
         let isDead = false;
+        let hasUnmuted = false;
 
         // --- UI Elements ---
         const screens = { start: document.getElementById('start-screen'), game: document.getElementById('game-screen'), result: document.getElementById('result-screen') };
@@ -327,7 +437,14 @@
         }
 
         function startGame() {
-            trackEvent('game_started'); // Log to Vercel
+            // Auto-unmute on first play if they haven't touched the button
+            if (!hasUnmuted) {
+                AudioEngine.init();
+                AudioEngine.setMute(false);
+                hasUnmuted = true;
+            }
+            
+            trackEvent('game_started'); 
             currentLevel = 1;
             score = 0;
             isDead = false;
@@ -367,6 +484,7 @@
             timeText.style.color = '#292524';
             
             let lastUpdate = performance.now();
+            let lastTickSecond = Math.ceil(timeLeft);
             
             timerInterval = setInterval(() => {
                 if(isDead) return clearInterval(timerInterval);
@@ -381,10 +499,20 @@
                 timerBar.style.width = `${percentage}%`;
                 timeText.innerText = `${timeLeft.toFixed(1)}s`;
 
-                if (timeLeft <= 5.0 && !timerBar.classList.contains('panic')) {
-                    timerBar.classList.add('panic');
-                    ambientBg.classList.add('panic');
-                    timeText.style.color = '#ef4444';
+                // Panic Mode Audio & Visuals
+                if (timeLeft <= 5.0) {
+                    if(!timerBar.classList.contains('panic')) {
+                        timerBar.classList.add('panic');
+                        ambientBg.classList.add('panic');
+                        timeText.style.color = '#ef4444';
+                    }
+                    
+                    // Play ticking sound every full second when under 5s
+                    const currentSecond = Math.ceil(timeLeft);
+                    if (currentSecond < lastTickSecond && currentSecond > 0) {
+                        AudioEngine.playTick();
+                        lastTickSecond = currentSecond;
+                    }
                 }
 
                 if (timeLeft === 0) {
@@ -397,7 +525,8 @@
         function handleDeath() {
             if(isDead) return;
             isDead = true;
-            trackEvent('game_over', { level_reached: currentLevel - 1, final_score: score }); // Log to Vercel
+            AudioEngine.playGameOver();
+            trackEvent('game_over', { level_reached: currentLevel - 1, final_score: score }); 
             
             document.getElementById('overlay-level').innerText = currentLevel - 1;
             gameOverOverlay.classList.add('active');
@@ -413,7 +542,8 @@
             const verseIndex = (currentLevel - 1) % gameVerses.length;
             currentVerseData = gameVerses[verseIndex];
             
-            currentMaxTime = Math.max(6, 20 - Math.floor((currentLevel - 1) * 1)); 
+            // The Squeeze: Starts at 30s, reduces by 1s every level. Hard cap at 12 seconds.
+            currentMaxTime = Math.max(12, 30 - Math.floor((currentLevel - 1) * 1)); 
             timeLeft = currentMaxTime;
 
             targetTimeBadge.innerText = `Max: ${currentMaxTime}s`;
@@ -463,6 +593,8 @@
             const targetSlotIndex = getFirstEmptySlot();
             if (targetSlotIndex === -1) return;
 
+            AudioEngine.playPop();
+
             const slotEl = document.querySelector(`.word-slot[data-slot-index="${targetSlotIndex}"]`);
             slotEl.innerText = word;
             slotEl.classList.add('filled');
@@ -479,6 +611,8 @@
             if (isDead) return;
             const wordInSlot = slotsFilled[slotIndex];
             if (!wordInSlot) return; 
+
+            AudioEngine.playPop();
 
             const slotEl = document.querySelector(`.word-slot[data-slot-index="${slotIndex}"]`);
             const sourceChipIndex = slotEl.dataset.sourceChip;
@@ -510,8 +644,13 @@
 
             if (isCorrect) {
                 clearInterval(timerInterval); 
+                AudioEngine.playSuccess();
                 
-                const pointsEarned = Math.ceil(timeLeft * 10 * (1 + (currentLevel * 0.1)));
+                // Realistic Scoring: 10 points + 1 point for every second remaining
+                const basePoints = 10;
+                const timeBonus = Math.ceil(timeLeft);
+                const pointsEarned = basePoints + timeBonus;
+                
                 score += pointsEarned;
                 spawnFloatingScore(pointsEarned);
                 
@@ -519,8 +658,9 @@
                     currentLevel++;
                     updateStatsUI();
                     loadLevel();
-                }, 600);
+                }, 800);
             } else {
+                AudioEngine.playError();
                 timeLeft = Math.max(0, timeLeft - 3);
                 verseCard.classList.add('fatal-error');
                 spawnFloatingScore(3, true);
@@ -539,9 +679,10 @@
 
             let rank = "";
             const cleared = currentLevel - 1;
-            if (cleared >= 15) rank = "👑 Biblical Scholar";
-            else if (cleared >= 10) rank = "⚔️ Warrior of the Word";
-            else if (cleared >= 5) rank = "🛡️ Defender of Faith";
+            if (cleared >= 25) rank = "👑 Apostolic General";
+            else if (cleared >= 15) rank = "📜 Biblical Scholar";
+            else if (cleared >= 8) rank = "⚔️ Warrior of the Word";
+            else if (cleared >= 4) rank = "🛡️ Defender of Faith";
             else rank = "🌱 Novice Reader";
             
             document.getElementById('final-rank').innerText = rank;
@@ -564,7 +705,7 @@
         }
 
         async function shareTestimony() {
-            trackEvent('share_clicked', { score: score }); // Log to Vercel
+            trackEvent('share_clicked', { score: score }); 
             
             const btn = document.getElementById('export-btn');
             const originalHTML = btn.innerHTML;
@@ -623,6 +764,5 @@
     </script>
 </body>
 </html>
-
 
 
