@@ -1,1 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Daily Manna - Sudden Death</title>
+    
+    <!-- Vercel Web Analytics -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script src="/_vercel/insights/script.js"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fafaf9; 
+            color: #292524;
+            overscroll-behavior-y: contain;
+            overflow: hidden;
+        }
+
+        .font-serif { font-family: 'Playfair Display', serif; }
+
+        /* Ambient background - reacts to time/level */
+        .bg-ambient {
+            background: radial-gradient(circle at 50% 0%, #fef3c7 0%, transparent 50%),
+                        radial-gradient(circle at 100% 100%, #e0f2fe 0%, transparent 50%);
+            position: fixed; inset: 0; z-index: -1;
+            transition: background 0.5s ease;
+        }
+        .bg-ambient.heated { background: radial-gradient(circle at 50% 0%, #fed7aa 0%, transparent 60%), radial-gradient(circle at 100% 100%, #fca5a5 0%, transparent 60%); }
+        .bg-ambient.panic { background: radial-gradient(circle at 50% 0%, #ef4444 0%, transparent 70%), radial-gradient(circle at 100% 100%, #7f1d1d 0%, transparent 70%); }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        /* Timer Bar */
+        .timer-container {
+            width: 100%; height: 8px;
+            background: #e7e5e4;
+            border-radius: 999px; overflow: hidden;
+            margin-bottom: 16px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .timer-bar {
+            height: 100%; width: 100%;
+            background: linear-gradient(90deg, #f59e0b, #ef4444);
+            border-radius: 999px; transform-origin: left;
+            transition: width 0.1s linear, background-color 0.3s;
+        }
+        .timer-bar.panic {
+            background: #dc2626; 
+            box-shadow: 0 0 15px rgba(220, 38, 38, 0.8);
+            animation: pulse-red 0.3s infinite;
+        }
+
+        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* Word Slots */
+        .word-slot {
+            display: inline-flex; min-width: 70px; height: 36px;
+            align-items: center; justify-content: center;
+            border-bottom: 3px solid #d6d3d1; margin: 0 4px;
+            vertical-align: bottom; font-family: 'Inter', sans-serif;
+            font-weight: 700; color: #0369a1; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .word-slot.active {
+            border-bottom-color: #f59e0b; background: rgba(245, 158, 11, 0.1);
+            border-radius: 4px 4px 0 0;
+        }
+        .word-slot.filled {
+            border-bottom-color: transparent; background: #f0f9ff;
+            border-radius: 6px; padding: 0 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .word-slot.error {
+            background: #fef2f2; color: #ef4444; border-bottom-color: transparent;
+        }
+        .word-slot.success {
+            background: #dcfce7; color: #166534; transform: scale(1.1); font-size: 1.1em;
+        }
+
+        /* Word Chips */
+        .word-chip {
+            background: white; border: 2px solid #e7e5e4;
+            padding: 10px 18px; border-radius: 12px; font-weight: 600;
+            color: #44403c; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            transition: all 0.1s ease; cursor: pointer; user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .word-chip:active { transform: scale(0.95); background: #f8fafc; border-color: #cbd5e1; }
+        .word-chip.used { opacity: 0; pointer-events: none; transform: scale(0.8) translateY(10px); }
+
+        /* Animations */
+        @keyframes fatal-shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px) rotate(-2deg); }
+            40% { transform: translateX(10px) rotate(2deg); }
+            60% { transform: translateX(-10px) rotate(-2deg); }
+            80% { transform: translateX(10px) rotate(2deg); }
+        }
+        .fatal-error { animation: fatal-shake 0.4s cubic-bezier(.36,.07,.19,.97) both; border: 2px solid #ef4444; }
+
+        @keyframes floatScore {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-60px) scale(1.5); }
+        }
+        .floating-score {
+            position: absolute; color: #f59e0b; font-weight: 900; font-size: 2rem;
+            pointer-events: none; animation: floatScore 0.8s ease-out forwards; z-index: 100;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Game Over Overlay */
+        .game-over-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.9);
+            z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .game-over-overlay.active { opacity: 1; pointer-events: all; }
+        .game-over-text { font-family: 'Russo One', 'Inter', sans-serif; font-size: 4rem; font-weight: 900; color: #ef4444; letter-spacing: 4px; text-transform: uppercase; transform: scale(0.5); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-shadow: 0 0 20px rgba(239, 68, 68, 0.6); }
+        .game-over-overlay.active .game-over-text { transform: scale(1); }
+
+        #capture-area { background: linear-gradient(135deg, #ffffff 0%, #fdfbf7 100%); position: relative; overflow: hidden; }
+        #capture-area::before { content: ''; position: absolute; top: 0; right: 0; width: 250px; height: 250px; background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%); border-radius: 50%; transform: translate(30%, -30%); }
+    </style>
+</head>
+<body class="h-[100dvh] flex flex-col items-center justify-center p-2 md:p-4 relative">
+    
+    <div id="ambient-bg" class="bg-ambient"></div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div class="w-full max-w-lg mx-auto flex flex-col h-full max-h-[850px]">
+        
+        <!-- Header -->
+        <header class="flex justify-between items-end mb-2 px-2 shrink-0">
+            <div>
+                <h1 class="font-serif font-bold text-2xl text-stone-900 tracking-tight">Daily Manna</h1>
+                <p class="text-[10px] text-red-600 uppercase tracking-widest font-black">Sudden Death</p>
+            </div>
+            
+            <div id="stats-board" class="flex gap-3 hidden">
+                <div class="text-right">
+                    <div class="text-[10px] text-stone-400 uppercase font-bold tracking-wider">Score</div>
+                    <div id="score-display" class="font-mono font-black text-xl text-stone-800 leading-none">0</div>
+                </div>
+                <div class="text-right bg-orange-100 px-3 py-1 rounded-lg border border-orange-200 shadow-sm">
+                    <div class="text-[10px] text-orange-700 uppercase font-bold tracking-wider">Level</div>
+                    <div class="font-mono font-black text-xl text-orange-700 leading-none" id="level-display">1</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- START SCREEN -->
+        <div id="start-screen" class="flex-1 flex flex-col justify-center items-center text-center px-4 transition-opacity duration-300">
+            <div class="w-24 h-24 bg-gradient-to-br from-red-100 to-orange-100 rounded-full flex items-center justify-center mb-6 shadow-inner border border-red-200 relative overflow-hidden">
+                <div class="absolute inset-0 bg-red-500 opacity-20 animate-pulse"></div>
+                <span class="text-5xl relative z-10">⏳</span>
+            </div>
+            <h2 class="font-serif text-3xl md:text-4xl text-stone-900 mb-2 font-black">Endless Survival</h2>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-stone-100 max-w-sm mb-8 text-sm text-stone-600 space-y-2 text-left">
+                <p>🔥 <strong>The Rules:</strong> Keep completing verses. The game never stops until time runs out.</p>
+                <p>⏱️ <strong>The Squeeze:</strong> Every level you beat, you get less time for the next one.</p>
+                <p>❌ <strong>The Penalty:</strong> Wrong answers instantly deduct <strong>3 seconds</strong>.</p>
+            </div>
+            <button onclick="startGame()" class="w-full bg-red-600 text-white font-black text-lg py-4 rounded-xl hover:bg-red-700 transition shadow-xl hover:shadow-2xl flex justify-center items-center gap-2 transform hover:-translate-y-1">
+                Start Survival Run
+            </button>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="game-screen" class="flex-1 flex flex-col hidden opacity-0 transition-opacity duration-300 relative">
+            
+            <div class="flex justify-between items-center mb-2 px-1 shrink-0">
+                <span class="text-xs font-bold text-stone-500 uppercase tracking-widest flex gap-2">
+                    <span id="target-time-badge" class="bg-stone-200 px-2 rounded text-stone-700">Max: 20s</span>
+                </span>
+                <span class="text-xl font-mono font-black text-stone-800" id="time-text">20.0s</span>
+            </div>
+
+            <!-- The Shrinking Timer -->
+            <div class="timer-container shrink-0">
+                <div id="timer-bar" class="timer-bar"></div>
+            </div>
+
+            <!-- Verse Card -->
+            <div id="verse-card" class="glass-card rounded-3xl p-6 md:p-8 mb-4 relative shrink-0">
+                <h3 id="verse-ref" class="text-xs font-black text-amber-600 mb-3 tracking-widest uppercase bg-amber-50 inline-block px-3 py-1 rounded-full border border-amber-100"></h3>
+                <div id="verse-text" class="font-serif text-[1.4rem] md:text-[1.7rem] leading-[2.1] text-stone-800 relative z-10">
+                    <!-- Verse text and slots injected here -->
+                </div>
+            </div>
+
+            <!-- Word Bank -->
+            <div class="mt-auto pb-4 overflow-y-auto">
+                <div id="word-bank" class="flex flex-wrap justify-center gap-2 md:gap-3">
+                    <!-- Chips injected here -->
+                </div>
+            </div>
+
+            <!-- Instant Death Overlay -->
+            <div id="game-over-overlay" class="game-over-overlay">
+                <div class="game-over-text mb-4">TIME OUT</div>
+                <p class="text-white text-lg font-medium opacity-80">You survived <span id="overlay-level" class="font-bold text-amber-400"></span> levels.</p>
+            </div>
+        </div>
+
+        <!-- RESULT / SHARE SCREEN -->
+        <div id="result-screen" class="flex-1 flex flex-col hidden opacity-0 transition-opacity duration-300 items-center justify-center">
+            
+            <div id="capture-area" class="w-full rounded-[2rem] p-6 shadow-sm border border-stone-200 text-center mb-6">
+                
+                <div class="mb-4 inline-flex items-center gap-2 bg-red-50 text-red-700 text-[10px] md:text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest border border-red-100" id="final-rank">
+                    Rank: Martyr
+                </div>
+                
+                <h2 class="font-serif text-3xl md:text-4xl font-black text-stone-900 mb-2">Run Ended</h2>
+                
+                <!-- Final Stats Grid -->
+                <div class="grid grid-cols-2 gap-3 my-6">
+                    <div class="bg-stone-50 rounded-2xl p-4 border border-stone-100 shadow-inner">
+                        <div class="text-[10px] text-stone-400 uppercase font-bold tracking-widest mb-1">Final Score</div>
+                        <div id="final-score" class="font-mono text-3xl font-black text-stone-800">1,240</div>
+                    </div>
+                    <div class="bg-amber-50 rounded-2xl p-4 border border-amber-100 shadow-inner">
+                        <div class="text-[10px] text-amber-600 uppercase font-bold tracking-widest mb-1">Verses Cleared</div>
+                        <div class="font-mono text-3xl font-black text-amber-600 flex justify-center items-center gap-1">
+                            <span id="final-level">5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 border-t border-stone-100 pt-6" id="name-input-section">
+                    <p class="text-xs text-stone-400 mb-2 uppercase tracking-widest font-bold">Sign Your Legacy</p>
+                    <input type="text" id="believer-name" placeholder="Enter name..." class="text-center font-serif text-2xl md:text-3xl border-b-2 border-stone-200 focus:border-red-500 outline-none bg-transparent placeholder-stone-300 pb-1 w-full transition-colors font-bold text-stone-800" maxlength="15">
+                </div>
+                <div id="display-name" class="mt-4 border-t border-stone-100 pt-6 font-serif text-3xl font-bold text-stone-900 hidden">
+                </div>
+            </div>
+
+            <div class="w-full flex gap-3">
+                <button onclick="resetGame()" class="flex-1 py-4 bg-white text-stone-700 font-bold rounded-xl border border-stone-200 hover:bg-stone-50 transition shadow-sm">
+                    Play Again
+                </button>
+                <button onclick="shareTestimony()" id="export-btn" class="flex-[2] py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition shadow-lg flex justify-center items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+                    Flex Survival
+                </button>
+            </div>
+        </div>
+
+        <div id="toast" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-stone-900 text-white px-6 py-3 rounded-full shadow-2xl -translate-y-20 opacity-0 transition-all duration-300 z-50 text-sm font-bold whitespace-nowrap">
+            Notification
+        </div>
+
+    </div>
+
+    <script>
+        // --- Custom Vercel Analytics Event Tracking (Optional but recommended) ---
+        function trackEvent(eventName, data) {
+            if (window.va) {
+                window.va('event', eventName, data);
+            }
+        }
+
+        // --- Endless Pool of Verses (Escalating Difficulty) ---
+        const verseDatabase = [
+            { ref: "John 11:35", text: "Jesus {0}.", answers: ["wept"], distractors: ["cried", "prayed", "slept"] },
+            { ref: "1 Thess 5:16", text: "Rejoice {0},", answers: ["always"], distractors: ["forever", "daily", "often"] },
+            { ref: "Psalm 56:3", text: "When I am {0}, I put my {1} in you.", answers: ["afraid", "trust"], distractors: ["scared", "faith", "hope", "lost"] },
+            { ref: "Philippians 4:13", text: "I can do all {0} through him who gives me {1}.", answers: ["things", "strength"], distractors: ["work", "miracles", "power", "hope"] },
+            { ref: "Proverbs 3:5", text: "Trust in the Lord with all your {0}, and do not lean on your own {1}.", answers: ["heart", "understanding"], distractors: ["mind", "wisdom", "strength", "eyes"] },
+            { ref: "Psalm 119:105", text: "Your word is a {0} for my feet, a {1} on my path.", answers: ["lamp", "light"], distractors: ["guide", "fire", "torch", "shield"] },
+            { ref: "Matthew 5:14", text: "You are the {0} of the world. A town built on a {1} cannot be hidden.", answers: ["light", "hill"], distractors: ["salt", "mountain", "rock", "hope"] },
+            { ref: "Romans 8:28", text: "And we know that in all things God works for the {0} of those who {1} him.", answers: ["good", "love"], distractors: ["benefit", "serve", "seek", "glory"] },
+            { ref: "Isaiah 40:31", text: "But those who {0} in the Lord will renew their {1}. They will soar on wings like {2}.", answers: ["hope", "strength", "eagles"], distractors: ["trust", "power", "doves", "wait"] },
+            { ref: "Galatians 5:22", text: "But the fruit of the Spirit is love, joy, {0}, {1}, kindness, {2}, faithfulness...", answers: ["peace", "patience", "goodness"], distractors: ["grace", "mercy", "power", "gentleness"] },
+            { ref: "Ephesians 2:8", text: "For it is by {0} you have been saved, through {1}—and this is not from yourselves, it is the {2} of God.", answers: ["grace", "faith", "gift"], distractors: ["mercy", "works", "power", "will"] },
+            { ref: "2 Timothy 1:7", text: "For the Spirit God gave us does not make us {0}, but gives us {1}, {2} and self-discipline.", answers: ["timid", "power", "love"], distractors: ["weak", "strength", "peace", "fearful"] }
+        ];
+
+        let gameVerses = [];
+
+        // --- Core State ---
+        let currentLevel = 1; 
+        let score = 0;
+        let timerInterval;
+        let currentMaxTime = 20; 
+        let timeLeft = 20;
+        let currentVerseData = null;
+        let slotsFilled = [];
+        let isDead = false;
+
+        // --- UI Elements ---
+        const screens = { start: document.getElementById('start-screen'), game: document.getElementById('game-screen'), result: document.getElementById('result-screen') };
+        const statsBoard = document.getElementById('stats-board');
+        const scoreDisplay = document.getElementById('score-display');
+        const levelDisplay = document.getElementById('level-display');
+        const timerBar = document.getElementById('timer-bar');
+        const timeText = document.getElementById('time-text');
+        const targetTimeBadge = document.getElementById('target-time-badge');
+        const verseRefEl = document.getElementById('verse-ref');
+        const verseTextEl = document.getElementById('verse-text');
+        const wordBankEl = document.getElementById('word-bank');
+        const ambientBg = document.getElementById('ambient-bg');
+        const verseCard = document.getElementById('verse-card');
+        const gameOverOverlay = document.getElementById('game-over-overlay');
+
+        // --- Logic ---
+        function switchScreen(screenName) {
+            Object.values(screens).forEach(s => {
+                s.style.opacity = '0';
+                setTimeout(() => {
+                    s.classList.add('hidden');
+                    if (s === screens[screenName]) { s.classList.remove('hidden'); setTimeout(() => s.style.opacity = '1', 50); }
+                }, 300);
+            });
+        }
+
+        function startGame() {
+            trackEvent('game_started'); // Log to Vercel
+            currentLevel = 1;
+            score = 0;
+            isDead = false;
+            updateStatsUI();
+            
+            gameVerses = [...verseDatabase].sort(() => Math.random() - 0.5);
+
+            statsBoard.classList.remove('hidden');
+            ambientBg.classList.add('heated'); 
+            gameOverOverlay.classList.remove('active');
+            
+            loadLevel();
+            switchScreen('game');
+        }
+
+        function updateStatsUI() {
+            scoreDisplay.innerText = score.toLocaleString();
+            levelDisplay.innerText = currentLevel;
+        }
+
+        function spawnFloatingScore(points, isPenalty = false) {
+            const rect = verseCard.getBoundingClientRect();
+            const floater = document.createElement('div');
+            floater.className = 'floating-score';
+            floater.innerText = isPenalty ? `-${points}s` : `+${points}`;
+            floater.style.color = isPenalty ? '#ef4444' : '#f59e0b';
+            floater.style.left = `${rect.left + (rect.width/2) - 20}px`;
+            floater.style.top = `${rect.top + 50}px`;
+            document.body.appendChild(floater);
+            setTimeout(() => floater.remove(), 1000);
+        }
+
+        function startCountdown() {
+            clearInterval(timerInterval);
+            timerBar.classList.remove('panic');
+            ambientBg.classList.remove('panic');
+            timeText.style.color = '#292524';
+            
+            let lastUpdate = performance.now();
+            
+            timerInterval = setInterval(() => {
+                if(isDead) return clearInterval(timerInterval);
+
+                const now = performance.now();
+                const delta = (now - lastUpdate) / 1000;
+                lastUpdate = now;
+                
+                timeLeft = Math.max(0, timeLeft - delta);
+                
+                const percentage = (timeLeft / currentMaxTime) * 100;
+                timerBar.style.width = `${percentage}%`;
+                timeText.innerText = `${timeLeft.toFixed(1)}s`;
+
+                if (timeLeft <= 5.0 && !timerBar.classList.contains('panic')) {
+                    timerBar.classList.add('panic');
+                    ambientBg.classList.add('panic');
+                    timeText.style.color = '#ef4444';
+                }
+
+                if (timeLeft === 0) {
+                    clearInterval(timerInterval);
+                    handleDeath();
+                }
+            }, 16);
+        }
+
+        function handleDeath() {
+            if(isDead) return;
+            isDead = true;
+            trackEvent('game_over', { level_reached: currentLevel - 1, final_score: score }); // Log to Vercel
+            
+            document.getElementById('overlay-level').innerText = currentLevel - 1;
+            gameOverOverlay.classList.add('active');
+            verseCard.classList.add('fatal-error');
+
+            setTimeout(() => {
+                verseCard.classList.remove('fatal-error');
+                endGame();
+            }, 2500);
+        }
+
+        function loadLevel() {
+            const verseIndex = (currentLevel - 1) % gameVerses.length;
+            currentVerseData = gameVerses[verseIndex];
+            
+            currentMaxTime = Math.max(6, 20 - Math.floor((currentLevel - 1) * 1)); 
+            timeLeft = currentMaxTime;
+
+            targetTimeBadge.innerText = `Max: ${currentMaxTime}s`;
+            slotsFilled = new Array(currentVerseData.answers.length).fill(null);
+            
+            verseRefEl.innerText = currentVerseData.ref;
+
+            let htmlText = currentVerseData.text;
+            currentVerseData.answers.forEach((_, index) => {
+                const slotHTML = `<span class="word-slot" data-slot-index="${index}" onclick="handleSlotClick(${index})"></span>`;
+                htmlText = htmlText.replace(`{${index}}`, slotHTML);
+            });
+            verseTextEl.innerHTML = htmlText;
+
+            updateSlotHighlighting();
+
+            let allOptions = [...currentVerseData.answers, ...currentVerseData.distractors];
+            if (allOptions.length > 8) allOptions = allOptions.slice(0, 8); 
+            allOptions.sort(() => Math.random() - 0.5); 
+            
+            wordBankEl.innerHTML = '';
+            allOptions.forEach((word, index) => {
+                const chip = document.createElement('div');
+                chip.className = 'word-chip';
+                chip.innerText = word;
+                chip.dataset.word = word;
+                chip.dataset.bankIndex = index;
+                chip.onclick = () => handleChipClick(chip, word);
+                wordBankEl.appendChild(chip);
+            });
+
+            startCountdown();
+        }
+
+        function getFirstEmptySlot() { return slotsFilled.indexOf(null); }
+
+        function updateSlotHighlighting() {
+            const slots = document.querySelectorAll('.word-slot');
+            slots.forEach(s => s.classList.remove('active'));
+            const firstEmpty = getFirstEmptySlot();
+            if (firstEmpty !== -1) slots[firstEmpty].classList.add('active');
+        }
+
+        function handleChipClick(chipEl, word) {
+            if (chipEl.classList.contains('used') || isDead) return;
+
+            const targetSlotIndex = getFirstEmptySlot();
+            if (targetSlotIndex === -1) return;
+
+            const slotEl = document.querySelector(`.word-slot[data-slot-index="${targetSlotIndex}"]`);
+            slotEl.innerText = word;
+            slotEl.classList.add('filled');
+            slotEl.dataset.sourceChip = chipEl.dataset.bankIndex;
+            
+            slotsFilled[targetSlotIndex] = word;
+            chipEl.classList.add('used');
+
+            updateSlotHighlighting();
+            checkLevelComplete();
+        }
+
+        function handleSlotClick(slotIndex) {
+            if (isDead) return;
+            const wordInSlot = slotsFilled[slotIndex];
+            if (!wordInSlot) return; 
+
+            const slotEl = document.querySelector(`.word-slot[data-slot-index="${slotIndex}"]`);
+            const sourceChipIndex = slotEl.dataset.sourceChip;
+            const chipEl = document.querySelector(`.word-chip[data-bank-index="${sourceChipIndex}"]`);
+            if(chipEl) chipEl.classList.remove('used');
+
+            slotEl.innerText = '';
+            slotEl.classList.remove('filled', 'error', 'success');
+            delete slotEl.dataset.sourceChip;
+            slotsFilled[slotIndex] = null;
+
+            updateSlotHighlighting();
+        }
+
+        function checkLevelComplete() {
+            if (slotsFilled.includes(null)) return;
+
+            let isCorrect = true;
+            slotsFilled.forEach((word, index) => {
+                const slotEl = document.querySelector(`.word-slot[data-slot-index="${index}"]`);
+                if (word !== currentVerseData.answers[index]) {
+                    isCorrect = false;
+                    slotEl.classList.add('error');
+                    setTimeout(() => slotEl.classList.remove('error'), 400);
+                } else {
+                    slotEl.classList.add('success');
+                }
+            });
+
+            if (isCorrect) {
+                clearInterval(timerInterval); 
+                
+                const pointsEarned = Math.ceil(timeLeft * 10 * (1 + (currentLevel * 0.1)));
+                score += pointsEarned;
+                spawnFloatingScore(pointsEarned);
+                
+                setTimeout(() => {
+                    currentLevel++;
+                    updateStatsUI();
+                    loadLevel();
+                }, 600);
+            } else {
+                timeLeft = Math.max(0, timeLeft - 3);
+                verseCard.classList.add('fatal-error');
+                spawnFloatingScore(3, true);
+                
+                if (timeLeft === 0) handleDeath();
+                else setTimeout(() => verseCard.classList.remove('fatal-error'), 400);
+            }
+        }
+
+        function endGame() {
+            statsBoard.classList.add('hidden');
+            ambientBg.classList.remove('heated', 'panic');
+            
+            document.getElementById('final-score').innerText = score.toLocaleString();
+            document.getElementById('final-level').innerText = currentLevel - 1;
+
+            let rank = "";
+            const cleared = currentLevel - 1;
+            if (cleared >= 15) rank = "👑 Biblical Scholar";
+            else if (cleared >= 10) rank = "⚔️ Warrior of the Word";
+            else if (cleared >= 5) rank = "🛡️ Defender of Faith";
+            else rank = "🌱 Novice Reader";
+            
+            document.getElementById('final-rank').innerText = rank;
+            switchScreen('result');
+        }
+
+        function resetGame() {
+            document.getElementById('believer-name').value = '';
+            document.getElementById('name-input-section').classList.remove('hidden');
+            document.getElementById('display-name').classList.add('hidden');
+            switchScreen('start');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.transform = 'translate(-50%, 0)';
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.transform = 'translate(-50%, -20px)'; toast.style.opacity = '0'; }, 3000);
+        }
+
+        async function shareTestimony() {
+            trackEvent('share_clicked', { score: score }); // Log to Vercel
+            
+            const btn = document.getElementById('export-btn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '⏳ Processing...';
+            btn.disabled = true;
+
+            const nameInput = document.getElementById('believer-name').value.trim();
+            const inputSection = document.getElementById('name-input-section');
+            const displaySection = document.getElementById('display-name');
+            
+            if (nameInput) {
+                displaySection.innerText = nameInput;
+                inputSection.classList.add('hidden');
+                displaySection.classList.remove('hidden');
+            } else { inputSection.classList.add('hidden'); }
+
+            const captureArea = document.getElementById('capture-area');
+
+            try {
+                await new Promise(r => setTimeout(r, 100)); 
+
+                const canvas = await html2canvas(captureArea, { scale: 2, backgroundColor: '#fdfbf7', logging: false });
+                canvas.toBlob(async (blob) => {
+                    const file = new File([blob], 'SurvivalRun.png', { type: 'image/png' });
+                    
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            btn.innerHTML = '📱 Opening Apps...';
+                            await navigator.share({
+                                files: [file],
+                                title: 'Daily Manna Survival',
+                                text: `I survived ${currentLevel - 1} levels in Sudden Death mode with a score of ${score}! Try to beat me: [Link]`
+                            });
+                            showToast("Shared successfully!");
+                        } catch (error) { if (error.name !== 'AbortError') fallbackDownload(canvas); }
+                    } else { fallbackDownload(canvas); }
+                    
+                    btn.innerHTML = originalHTML; btn.disabled = false;
+                    inputSection.classList.remove('hidden'); displaySection.classList.add('hidden');
+                }, 'image/png');
+
+            } catch (err) {
+                alert("Couldn't process image. Try taking a screenshot!");
+                btn.innerHTML = originalHTML; btn.disabled = false;
+                inputSection.classList.remove('hidden'); displaySection.classList.add('hidden');
+            }
+        }
+
+        function fallbackDownload(canvas) {
+            showToast("Saving image to device...");
+            const link = document.createElement('a');
+            link.download = 'SurvivalRun.png';
+            link.href = canvas.toDataURL("image/png", 1.0);
+            link.click();
+        }
+    </script>
+</body>
+</html>
+
+
 
